@@ -31,6 +31,8 @@ const EDO_PROMPT = `You are a historian of Edo and a master of Hiroshige's woodb
 Given a traveller's photo of present-day Tokyo, the GPS position and the real lore and shrines nearby, work out what this exact
 viewpoint looked like around 1850 (moats, canals, daimyo estates, temples, fields, the bay shoreline, Mount Fuji views).
 Map each modern element you see to its Edo counterpart. Be historically plausible; say 'likely' when unsure.
+If a Hiroshige print of this place is provided (second image), it is real evidence of how the spot looked: use its landmarks,
+and say in the story that Hiroshige painted this place. The edit model will also receive that print as Image 2.
 Return ONLY JSON:
 {"observations": [3-5 concrete modern things seen in the photo],
  "then": [3-5 short 'modern thing -> Edo counterpart' mappings],
@@ -74,7 +76,12 @@ export default {
 // ---------------------------------------------------------------- conjure
 
 async function conjure(body, env, origin) {
-  const { image, lat, lng, mode = 'yokai', context = {} } = body;
+  const { image, lat, lng, mode = 'yokai', context = {}, reference } = body;
+  // Optional real Hiroshige print near this spot (Edo Window). Only Wikimedia-hosted public-domain scans are accepted.
+  const print =
+    mode === 'edo' && typeof reference?.image === 'string' && reference.image.startsWith('https://upload.wikimedia.org/')
+      ? { image: reference.image, no: reference.no, titleEn: reference.titleEn, titleJa: reference.titleJa }
+      : null;
   if (!image?.startsWith('data:image/')) throw httpError(400, 'image must be a data URL');
   if (!['yokai', 'edo'].includes(mode)) throw httpError(400, 'mode must be yokai or edo');
   await spendGuard(env);
@@ -91,14 +98,18 @@ async function conjure(body, env, origin) {
     gps: [lat, lng],
     nearest_legends: (context.legends || []).slice(0, 3),
     nearest_shrines_temples: (context.places || []).slice(0, 6),
+    ...(print && { hiroshige_print: { no: print.no, title: `${print.titleJa} (${print.titleEn})` } }),
   };
-  const story = await geminiJson(env, mode === 'edo' ? EDO_PROMPT : YOKAI_PROMPT, ctx, image);
+  const story = await geminiJson(env, mode === 'edo' ? EDO_PROMPT : YOKAI_PROMPT, ctx, image, print?.image);
+  if (print) {
+    story.imagePrompt = `Image 1 is the traveller's photo; Image 2 is Hiroshige's print of this place, a reference for Edo-period landmarks and style. Keep Image 1's viewpoint and perspective. ${story.imagePrompt}`;
+  }
 
   // 2. Nano Banana paints it into the real photo (async; the client polls /api/job/:id)
   const taskId = await duomi(env, 'POST', '/api/gemini/nano-banana-edit', {
     model: IMAGE_MODEL,
     prompt: story.imagePrompt,
-    image_urls: [photoUrl],
+    image_urls: print ? [photoUrl, print.image] : [photoUrl],
     aspect_ratio: 'auto',
     image_size: '1K',
   }).then((r) => r.data.task_id);
@@ -111,6 +122,7 @@ async function conjure(body, env, origin) {
     created: new Date().toISOString(),
     photo: photoUrl,
     story,
+    ...(print && { print }),
     taskId,
     status: 'painting',
   };
@@ -225,7 +237,7 @@ async function parade(env, origin) {
 
 // ---------------------------------------------------------------- helpers
 
-async function geminiJson(env, system, ctx, imageDataUrl) {
+async function geminiJson(env, system, ctx, imageDataUrl, referenceUrl) {
   const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.OPENROUTER_KEY}`, 'Content-Type': 'application/json' },
@@ -239,6 +251,7 @@ async function geminiJson(env, system, ctx, imageDataUrl) {
           content: [
             { type: 'text', text: JSON.stringify(ctx) },
             { type: 'image_url', image_url: { url: imageDataUrl } },
+            ...(referenceUrl ? [{ type: 'image_url', image_url: { url: referenceUrl } }] : []),
           ],
         },
       ],

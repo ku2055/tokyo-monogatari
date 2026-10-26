@@ -6,6 +6,7 @@ import './style.css';
 import legends from '../data/legends.json';
 import placesUrl from '../data/places.geojson?url';
 import { initLens } from './lens.js';
+import prints from '../data/edo-prints.json';
 
 // OpenFreeMap: free OSM vector tiles, no API key required
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
@@ -167,7 +168,10 @@ const markers = new Map();
 
 // ---------- map ----------
 maplibregl.setWorkerUrl(workerUrl);
+// A map position in the URL (#zoom/lat/lng/bearing/pitch) makes demo links shareable
+const deepLinked = /^#[\d.]+\/[\d.-]+\/[\d.-]+/.test(location.hash);
 const map = new maplibregl.Map({
+  hash: true,
   container: 'map',
   style: STYLE_URL,
   center: TOKYO,
@@ -189,11 +193,12 @@ map.on('load', () => {
     map.setPaintProperty('building-3d', 'fill-extrusion-opacity', 0.85);
   }
   addPlacesLayer();
+  addPrintsLayer();
   legends.forEach(addLegendMarker);
   updateProgress();
 
   // Gentle intro flight
-  map.flyTo({ center: [139.7745, 35.6995], zoom: 12.6, pitch: 60, bearing: -25, duration: 3500 });
+  if (!deepLinked) map.flyTo({ center: [139.7745, 35.6995], zoom: 12.6, pitch: 60, bearing: -25, duration: 3500 });
 });
 
 // Every shrine and temple in the 23 wards from OpenStreetMap: the shared "Tokyo Graph" base layer
@@ -228,6 +233,44 @@ function addPlacesLayer() {
   });
   map.on('mouseenter', 'places', () => (map.getCanvas().style.cursor = 'pointer'));
   map.on('mouseleave', 'places', () => (map.getCanvas().style.cursor = ''));
+}
+
+// Hiroshige's One Hundred Famous Views of Edo (1856-59), each at its real viewpoint
+function addPrintsLayer() {
+  map.addSource('prints', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: prints.map((p) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] }, properties: { no: p.no } })),
+    },
+    attribution: 'Hiroshige prints: public domain (Wikimedia Commons)',
+  });
+  map.addLayer({
+    id: 'prints',
+    type: 'circle',
+    source: 'prints',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 9],
+      'circle-color': '#2f5d8a',
+      'circle-stroke-color': '#c9a24a',
+      'circle-stroke-width': 2,
+    },
+  });
+  map.on('click', 'prints', (e) => {
+    const p = prints.find((x) => x.no === e.features[0].properties.no);
+    const ja = lang === 'ja';
+    new maplibregl.Popup({ offset: 10, maxWidth: '260px', className: 'print-popup' })
+      .setLngLat([p.lng, p.lat])
+      .setHTML(
+        `<img src="${p.image}" alt="" loading="lazy" />
+         <div class="print-no">${ja ? '名所江戸百景' : 'Hiroshige · 100 Views of Edo'} #${p.no}</div>
+         <strong>${ja ? p.titleJa : p.titleEn}</strong>
+         <div class="print-now">${ja ? '現在：' : 'Today: '}${p.modernPlace}</div>`
+      )
+      .addTo(map);
+  });
+  map.on('mouseenter', 'prints', () => (map.getCanvas().style.cursor = 'pointer'));
+  map.on('mouseleave', 'prints', () => (map.getCanvas().style.cursor = ''));
 }
 
 function addLegendMarker(legend) {
@@ -466,7 +509,7 @@ function toast(msg) {
 }
 
 // ---------- wiring ----------
-const lens = initLens({ map, legends, placesPromise, getLang: () => lang, getUserPos: () => userPos, toast });
+const lens = initLens({ map, legends, prints, placesPromise, getLang: () => lang, getUserPos: () => userPos, toast });
 $('#btn-yokai').addEventListener('click', () => lens.open('yokai'));
 $('#btn-edo').addEventListener('click', () => lens.open('edo'));
 $('#btn-lang').addEventListener('click', toggleLang);

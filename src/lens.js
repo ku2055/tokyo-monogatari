@@ -54,7 +54,10 @@ const STRINGS = {
   },
 };
 
-export function initLens({ map, legends, placesPromise, getLang, getUserPos, toast }) {
+// Edo Window uses a real Hiroshige print as reference when one was painted this close to you
+const PRINT_RADIUS_KM = 0.8;
+
+export function initLens({ map, legends, prints, placesPromise, getLang, getUserPos, toast }) {
   const s = () => STRINGS[getLang()];
   const panel = document.querySelector('#lens');
   const body = panel.querySelector('.lens-body');
@@ -131,7 +134,9 @@ export function initLens({ map, legends, placesPromise, getLang, getUserPos, toa
 
     try {
       const context = await nearbyContext(pos);
-      let rec = await api('POST', '/api/conjure', code, { image: photo, lat: pos[1], lng: pos[0], mode, context });
+      const reference = mode === 'edo' ? nearestPrint(pos) : undefined;
+      if (reference) stepEl.textContent = getLang() === 'ja' ? `広重がここを描いています：${reference.titleJa}` : `Hiroshige painted this spot: “${reference.titleEn}”`;
+      let rec = await api('POST', '/api/conjure', code, { image: photo, lat: pos[1], lng: pos[0], mode, context, reference });
       clearInterval(ticker);
       renderResult(rec, photo);
       while (rec.status === 'painting') {
@@ -167,6 +172,12 @@ export function initLens({ map, legends, placesPromise, getLang, getUserPos, toa
     };
   }
 
+  function nearestPrint([lng, lat]) {
+    const dist = (p) => Math.hypot((p.lat - lat) * 111, (p.lng - lng) * 91);
+    const best = [...prints].sort((a, b) => dist(a) - dist(b))[0];
+    return best && dist(best) <= PRINT_RADIUS_KM ? best : undefined;
+  }
+
   function renderResult(rec, localPhoto) {
     const str = s();
     const ja = getLang() === 'ja';
@@ -189,6 +200,12 @@ export function initLens({ map, legends, placesPromise, getLang, getUserPos, toa
         <h2>${ja ? st.title?.ja : st.title?.en}</h2><div class="ja">${ja ? st.title?.en : st.title?.ja}</div>`;
       text = ja ? st.storyJa : st.storyEn;
       if (st.then?.length) extra = `<ul class="lens-then">${st.then.map((x) => `<li>${x}</li>`).join('')}</ul>`;
+      if (rec.print) {
+        extra += `<figure class="lens-print">
+          <img src="${rec.print.image}" alt="" loading="lazy" />
+          <figcaption>${ja ? `歌川広重「名所江戸百景」${rec.print.no}　${rec.print.titleJa}` : `Hiroshige, 100 Famous Views of Edo #${rec.print.no}: ${rec.print.titleEn}`}</figcaption>
+        </figure>`;
+      }
     } else {
       const y = st.yokai || {};
       heading = `<div class="lens-kicker">👹 ${str.rank[y.rank] || ''}</div>
