@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a1420" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Walk Tokyo's temples, shrines and folk-tale sites on a 3D map and collect a goshuin-style stamp at each legend." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛩️</text></svg>" />
+    <title>Tokyo Monogatari</title>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-ja">東京物語</span>
+        <span class="brand-en">Tokyo Monogatari</span>
+      </div>
+      <button id="progress" class="pill" aria-label="Open stamp book">🏮 <span id="progress-count">0/0</span></button>
+    </header>
+
+    <nav class="fab-stack">
+      <button id="btn-lang" class="fab fab-text" title="English / 日本語">日本</button>
+      <button id="btn-locate" class="fab" title="Find me">📍</button>
+      <button id="btn-tour" class="fab" title="Legend tour">🎬</button>
+      <button id="btn-night" class="fab" title="Yokai hour">🌙</button>
+      <button id="btn-book" class="fab" title="Stamp book">📖</button>
+    </nav>
+
+    <section id="sheet" class="sheet" aria-hidden="true">
+      <button class="sheet-close" aria-label="Close">×</button>
+      <div class="sheet-body"></div>
+    </section>
+
+    <section id="book" class="book" aria-hidden="true">
+      <div class="book-head">
+        <h2>御朱印帳 · Stamp Book</h2>
+        <button class="book-close" aria-label="Close">×</button>
+      </div>
+      <div class="book-grid"></div>
+    </section>
+
+    <div id="seal" class="seal" aria-hidden="true"><span>集</span></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
