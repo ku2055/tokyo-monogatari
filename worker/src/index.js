@@ -8,7 +8,11 @@
 //   GET  /api/parade       everyone's finished yokai and Edo windows, for the Night Parade map
 //   GET  /img/*            public R2 files (Duomi must be able to fetch the uploaded photo)
 
+import sekien from '../../data/sekien.json';
+
 const GEMINI = 'google/gemini-3.8-flash';
+// Toriyama Sekien's 1776 bestiary (NDL, public domain): the AI names one as each new yokai's ancestor
+const BESTIARY = sekien.map(({ id, nameEn, nameJa, descEn }) => ({ id, nameEn, nameJa, descEn }));
 const GEMINI_TTS = 'google/gemini-3.8-flash-tts';
 const IMAGE_MODEL = 'gemini-nano-banana-2.1';
 const ELEVEN_VOICE = 'nPczCjzI2devNBz1zQrb'; // "Brian", deep narration
@@ -23,6 +27,9 @@ Return ONLY JSON:
  "edoPastJa": "the same in Japanese",
  "yokai": {"nameJa": "kanji name", "reading": "romaji", "nameEn": "English name", "appearance": "1-2 sentences",
            "habit": "what it does to passers-by, tied to a feature in the photo", "rank": "common|rare|legendary"},
+ "ancestor": "the id of its closest relative in sekien_bestiary (the provided list from Toriyama Sekien's 1776 encyclopedia)",
+ "ancestorWhy": "one short sentence: what it inherited from that ancestor",
+ "ancestorWhyJa": "the same in Japanese",
  "kaidanEn": "a 70-90 word kaidan told like a rakugo storyteller, second person, set at this spot",
  "kaidanJa": "the same kaidan in natural Japanese (rakugo storyteller tone), 150-200 characters",
  "imagePrompt": "an image-edit instruction to add this yokai into the photo: where it stands relative to visible objects, pose, ukiyo-e ink style creature with a subtle supernatural glow, keep the rest of the photo unchanged, no text"}`;
@@ -98,9 +105,11 @@ async function conjure(body, env, origin) {
     gps: [lat, lng],
     nearest_legends: (context.legends || []).slice(0, 3),
     nearest_shrines_temples: (context.places || []).slice(0, 6),
+    ...(mode === 'yokai' && { sekien_bestiary: BESTIARY }),
     ...(print && { hiroshige_print: { no: print.no, title: `${print.titleJa} (${print.titleEn})` } }),
   };
   const story = await geminiJson(env, mode === 'edo' ? EDO_PROMPT : YOKAI_PROMPT, ctx, image, print?.image);
+  if (story.ancestor && !BESTIARY.some((b) => b.id === story.ancestor)) delete story.ancestor;
   if (print) {
     story.imagePrompt = `Image 1 is the traveller's photo; Image 2 is Hiroshige's print of this place, a reference for Edo-period landmarks and style. Keep Image 1's viewpoint and perspective. ${story.imagePrompt}`;
   }

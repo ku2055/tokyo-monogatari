@@ -10,6 +10,7 @@ Built for a Tokyo hackathon. The map and stamp rally run on open data with **no 
 |---|---|---|
 | You do | Photograph any spot in Tokyo | Photograph any view |
 | The AI does | Reads the scene, your GPS, and the nearest real legends and shrines, then **invents a new yokai that haunts exactly that spot**. It paints the yokai into your photo and tells its kaidan like a rakugo storyteller (EN/JA) | Maps each modern thing it sees to its Edo counterpart (expressway → moat, asphalt → dirt slope) and **repaints your photo as the same viewpoint around 1850** in Hiroshige's woodblock style, with a narrated walk back in time |
+| Grounded in real heritage | The AI names the yokai's **ancestor among Toriyama Sekien's 1776 *Gazu Hyakki Yagyō*** (NDL scan, vectorized to SVG). The ancestor's woodcut brushes onto your photo while it paints | If Hiroshige painted within 800 m (*One Hundred Famous Views of Edo*, 1856–59), **the real print is sent as a reference** and shown beside the result |
 | Then | Drag the before/after slider. Every spirit joins the shared **Night Parade** map | The same, with the "then and now" mappings listed |
 
 Example from Kii-no-kuni-zaka, where Hearn's faceless Nopperabo appears: the AI spotted the wooden slope marker and conjured **削り顔狸, the "Face-Planing Tanuki"**, which planes travellers' faces smooth. Its Edo Window rebuilt the Kishū Tokugawa estate wall and the Benkei moat, matching Hiroshige's real 1857 print of the slope, which it was never shown.
@@ -74,6 +75,8 @@ Add `NSLocationWhenInUseUsageDescription` to `ios/App/App/Info.plist` so the sta
 | Map renderer | [MapLibre GL JS](https://maplibre.org) | No |
 | Basemap and 3D buildings | [OpenFreeMap](https://openfreemap.org) `liberty` style, © OpenStreetMap contributors | No |
 | Legends | `data/legends.json`, hand-curated and bilingual, each entry links its source | No |
+| Hiroshige's *100 Famous Views of Edo* | `data/edo-prints.json`: **119 prints geolocated** to their viewpoints (precision, ward, modern place). Images are public domain via Wikimedia Commons. As far as we know, this is the first open geodataset of the series | No |
+| Sekien yokai line art | `public/sekien/*.svg` + `data/sekien.json`: 12 yokai traced from 鳥山石燕『画図百鬼夜行』 (1776 blocks, 1805 printing). 出典：国立国会図書館デジタルコレクション [pid/2553975](https://dl.ndl.go.jp/pid/2553975), インターネット公開（保護期間満了）/ PDM (`scripts/fetch_sekien.mjs`) | No |
 | Shrines and temples | `data/places.geojson`, from OSM Overpass (`scripts/fetch_places.py`), © OpenStreetMap contributors, ODbL | No |
 
 ## AI content pipeline

@@ -1,6 +1,7 @@
 // Yokai Lens (百鬼夜行) and Edo Window (時の窓): live AI on a photo you take in the city.
 // The Cloudflare Worker in worker/ holds every key; this client only knows the demo access code the user types in.
 import * as maplibregl from 'maplibre-gl';
+import sekien from '../data/sekien.json';
 
 const API = import.meta.env.VITE_API || 'https://tokyo-monogatari-api.ken-ed7.workers.dev';
 const CODE_KEY = 'tokyo-monogatari:access-code';
@@ -28,6 +29,8 @@ const STRINGS = {
     error: 'The spirits are silent: ',
     parade: 'Night Parade',
     noGps: 'No GPS: using the map centre as your location',
+    ancestor: 'Its ancestor in Sekien’s 1776 bestiary',
+    ancestorStep: (n) => `Its ancestor stirs: ${n}…`,
   },
   ja: {
     yokaiTitle: '👹 妖怪レンズ',
@@ -51,6 +54,8 @@ const STRINGS = {
     error: '妖怪は沈黙している：',
     parade: '百鬼夜行',
     noGps: 'GPSなし：地図の中心を現在地として使います',
+    ancestor: '鳥山石燕『画図百鬼夜行』（1776年）に見る祖先',
+    ancestorStep: (n) => `祖先の${n}が目を覚ます…`,
   },
 };
 
@@ -184,6 +189,8 @@ export function initLens({ map, legends, prints, placesPromise, getLang, getUser
     const st = rec.story;
     const before = localPhoto || rec.photo;
     const after = rec.image;
+    const ancestor = rec.mode === 'yokai' && sekien.find((y) => y.id === rec.story?.ancestor);
+    const ancestorArt = ancestor ? `<div class="sekien-art" style="--svg: url('${new URL(ancestor.svg, document.baseURI).href}')"></div>` : '';
     const visual = after
       ? `<div class="compare" style="--cut: 50%">
            <img src="${before}" alt="" />
@@ -192,7 +199,8 @@ export function initLens({ map, legends, prints, placesPromise, getLang, getUser
            <span class="compare-hint">${str.drag}</span>
          </div>`
       : `<div class="summon"><img class="summon-photo" src="${before}" alt="" /><div class="summon-veil"></div>
-           <p class="summon-step">${str.painting}</p></div>`;
+           ${ancestorArt.replace('sekien-art', 'sekien-art summon-ancestor')}
+           <p class="summon-step">${ancestor ? str.ancestorStep(ja ? ancestor.nameJa : ancestor.nameEn) : str.painting}</p></div>`;
 
     let heading, text, extra = '';
     if (rec.mode === 'edo') {
@@ -212,6 +220,15 @@ export function initLens({ map, legends, prints, placesPromise, getLang, getUser
         <h2>${ja ? y.nameJa : y.nameEn}</h2><div class="ja">${ja ? `${y.nameEn} · ${y.reading}` : `${y.nameJa} · ${y.reading}`}</div>`;
       text = ja ? st.kaidanJa : st.kaidanEn;
       extra = `<p class="lens-habit">${y.appearance || ''}</p>
+        ${
+          ancestor
+            ? `<figure class="lens-ancestor">${ancestorArt}
+                <figcaption><strong>${str.ancestor}</strong><br>${ancestor.nameJa} ${ancestor.nameEn}<br>
+                ${(ja ? st.ancestorWhyJa : st.ancestorWhy) || (ja ? ancestor.descJa : ancestor.descEn)}
+                <br><a href="${ancestor.source}" target="_blank" rel="noopener">${ja ? '国立国会図書館デジタルコレクション' : 'National Diet Library'} ↗</a></figcaption>
+              </figure>`
+            : ''
+        }
         <p class="tip">🏯 ${(ja && st.edoPastJa) || st.edoPast || ''}</p>`;
     }
     body.innerHTML = `

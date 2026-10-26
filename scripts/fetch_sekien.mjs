@@ -32,56 +32,58 @@ const FULL_W = 5819;
 const PREVIEW_W = 1200;
 const S = FULL_W / PREVIEW_W;
 const BOOK = { 陰: '画図百鬼夜行 前編 陰', 陽: '画図百鬼夜行 前編 陽', 風: '画図百鬼夜行 前編 風' };
-const RIGHTS =
-  'Public Domain Mark (PDM) — 保護期間満了 / インターネット公開; ' +
-  '「国立国会図書館デジタルコレクション」収録資料, 鳥山石燕 画『百鬼夜行 3巻拾遺3巻』[1] 文化2 [1805], 長野屋勘吉, 請求記号 辰-23 (DOI 10.11501/2553975)';
+// Exactly as shown under 公開範囲 on https://dl.ndl.go.jp/pid/2553975 (checked 2026-10-26);
+// the item API (https://dl.ndl.go.jp/api/item/search/info:ndljp/pid/2553975) reports rights.code "pdm"
+// and the IIIF manifest metadata "Access Restrictions: PDM" (Public Domain Mark).
+const RIGHTS = 'インターネット公開（保護期間満了）';
+const RIGHTS_URL = 'https://dl.ndl.go.jp/pid/2553975';
+const CREDIT = '鳥山石燕 画『画図百鬼夜行』（安永5年/1776刊、文化2年/1805求版）出典：国立国会図書館デジタルコレクション https://dl.ndl.go.jp/pid/2553975';
 
 // box/masks: [x, y, w, h] in 1200px preview coords. thr: potrace threshold (0-255).
 const ITEMS = [
-  { id: 'kappa', nameJa: '河童', reading: 'かっぱ', nameEn: 'Kappa', vol: '陰', page: 13, box: [680, 380, 370, 410], masks: [],
+  { id: 'kappa', nameJa: '河童', reading: 'かっぱ', nameEn: 'Kappa', vol: '陰', page: 13, box: [685, 380, 355, 395], masks: [],
     descEn: 'A river imp with a water-filled dish on its head, lurking among lotus leaves to drag the careless into the water.',
     descJa: '頭の皿に水をたたえた川の妖怪。蓮の葉の陰にひそみ、油断した者を水中へ引きずり込む。' },
-  { id: 'kitsunebi', nameJa: '狐火', reading: 'きつねび', nameEn: 'Kitsunebi (Fox-fire)', vol: '陰', page: 16, box: [600, 400, 455, 360], masks: [],
+  { id: 'kitsunebi', nameJa: '狐火', reading: 'きつねび', nameEn: 'Kitsunebi (Fox-fire)', vol: '陰', page: 16, box: [618, 405, 430, 345], masks: [],
     descEn: 'A fox breathes ghostly flame from its mouth, the will-o’-the-wisp lights seen dancing over fields at night.',
     descJa: '狐が口から吐く怪しい火。夜の野に連なって揺れる鬼火の正体とされた。' },
-  { id: 'tengu', nameJa: '天狗', reading: 'てんぐ', nameEn: 'Tengu', vol: '陰', page: 10, box: [665, 300, 380, 515], masks: [],
+  { id: 'tengu', nameJa: '天狗', reading: 'てんぐ', nameEn: 'Tengu', vol: '陰', page: 10, box: [665, 300, 362, 505], masks: [],
     descEn: 'A beaked, feathered mountain goblin perched in the pines, master of swordsmanship and scourge of proud monks.',
     descJa: '松の上に羽を休める嘴の天狗。深山に住み、剣術に通じ、慢心した僧をこらしめる。' },
-  { id: 'nuppeppo', nameJa: 'ぬっぺっぽう', reading: 'ぬっぺっぽう', nameEn: 'Nuppeppō (faceless blob)', vol: '風', page: 35, box: [120, 215, 400, 545], masks: [],
+  { id: 'nuppeppo', nameJa: 'ぬっぺっぽう', reading: 'ぬっぺっぽう', nameEn: 'Nuppeppō (faceless blob)', vol: '風', page: 35, box: [125, 215, 395, 530], masks: [],
     descEn: 'A faceless lump of flesh that waddles out of temple grounds at night — Sekien’s cousin of the nopperabō.',
     descJa: '夜の寺のあたりをのそのそ歩く、顔のない肉のかたまり。のっぺらぼうの仲間とされる。' },
-  { id: 'rokurokubi', nameJa: '飛頭蛮', reading: 'ろくろくび', nameEn: 'Rokurokubi', vol: '陽', page: 24, box: [600, 345, 450, 385], masks: [],
+  { id: 'rokurokubi', nameJa: '飛頭蛮', reading: 'ろくろくび', nameEn: 'Rokurokubi', vol: '陽', page: 24, box: [600, 345, 440, 385], masks: [],
     descEn: 'While she sleeps, a woman’s head floats off on an impossibly long neck to peer over the folding screen.',
     descJa: '眠る女の首がするすると伸び、屏風の上から覗き込む。' },
-  { id: 'nekomata', nameJa: '猫また', reading: 'ねこまた', nameEn: 'Nekomata', vol: '陰', page: 12, box: [135, 250, 395, 520], masks: [],
+  { id: 'nekomata', nameJa: '猫また', reading: 'ねこまた', nameEn: 'Nekomata', vol: '陰', page: 12, box: [148, 250, 382, 515], masks: [],
     descEn: 'An old cat whose tail has split in two dances on its hind legs with a towel on its head.',
     descJa: '年を経て尾が二つに裂けた猫。手ぬぐいをかぶり、後ろ足で立って踊る。' },
-  { id: 'tanuki', nameJa: '狸', reading: 'たぬき', nameEn: 'Tanuki', vol: '陰', page: 14, box: [135, 300, 450, 460], masks: [],
+  { id: 'tanuki', nameJa: '狸', reading: 'たぬき', nameEn: 'Tanuki', vol: '陰', page: 14, box: [150, 395, 290, 375], masks: [],
     descEn: 'A shape-shifting raccoon dog standing upright by a stone lantern under the autumn moon.',
     descJa: '秋の月の下、石灯籠のそばに立つ化け狸。人を化かす名人。' },
-  { id: 'yurei', nameJa: '幽霊', reading: 'ゆうれい', nameEn: 'Yūrei (ghost)', vol: '陽', page: 22, box: [660, 165, 390, 650], masks: [],
+  { id: 'yurei', nameJa: '幽霊', reading: 'ゆうれい', nameEn: 'Yūrei (ghost)', vol: '陽', page: 22, box: [660, 182, 376, 628], masks: [],
     descEn: 'A long-haired ghost in a white robe that trails away into nothing, leaning over a garden fence.',
     descJa: '長い黒髪に白い衣、足のない幽霊が垣根に身を乗り出す。' },
-  { id: 'kodama', nameJa: '木魅', reading: 'こだま', nameEn: 'Kodama (tree spirit)', vol: '陰', page: 9, box: [135, 245, 915, 570], masks: [[680, 245, 190, 145]],
+  { id: 'kodama', nameJa: '木魅', reading: 'こだま', nameEn: 'Kodama (tree spirit)', vol: '陰', page: 9, box: [140, 245, 895, 570], masks: [[690, 245, 350, 150], [580, 245, 25, 570]],
     descEn: 'The spirits of hundred-year-old trees, appearing as an old couple beneath the pines.',
     descJa: '百年を経た木に宿る精霊。松の下に老夫婦の姿で現れる。' },
-  { id: 'ubume', nameJa: '姑獲鳥', reading: 'うぶめ', nameEn: 'Ubume', vol: '陽', page: 20, box: [135, 325, 455, 470], masks: [],
+  { id: 'ubume', nameJa: '姑獲鳥', reading: 'うぶめ', nameEn: 'Ubume', vol: '陽', page: 20, box: [142, 330, 440, 465], masks: [],
     descEn: 'The ghost of a woman who died in childbirth, standing in the rain by a river and begging passers-by to hold her baby.',
     descJa: 'お産で亡くなった女の霊。雨の川辺に立ち、通る人に赤子を抱いてくれと頼む。' },
-  { id: 'kamaitachi', nameJa: '窮奇', reading: 'かまいたち', nameEn: 'Kamaitachi', vol: '陰', page: 15, box: [600, 255, 450, 545], masks: [[600, 255, 65, 75]],
+  { id: 'kamaitachi', nameJa: '窮奇', reading: 'かまいたち', nameEn: 'Kamaitachi', vol: '陰', page: 15, box: [616, 262, 424, 535], masks: [[616, 262, 50, 70]],
     descEn: 'A sickle-clawed weasel riding a whirlwind, leaving painless cuts on anyone it brushes past.',
     descJa: 'つむじ風に乗った鎌の爪の鼬。触れた人に痛みのない切り傷を残す。' },
-  { id: 'tesso', nameJa: '鉄鼠', reading: 'てっそ', nameEn: 'Tesso (iron rat)', vol: '陽', page: 23, box: [610, 250, 440, 580], masks: [[610, 250, 150, 165]],
+  { id: 'tesso', nameJa: '鉄鼠', reading: 'てっそ', nameEn: 'Tesso (iron rat)', vol: '陽', page: 23, box: [610, 250, 432, 580], masks: [[610, 250, 140, 240]],
     descEn: 'The vengeful monk Raigō reborn as a giant rat, leading a horde of rats to gnaw the temple’s sutras.',
     descJa: '恨みを残した頼豪阿闍梨が大鼠となり、無数の鼠を率いて寺の経典を食い破る。' },
-  { id: 'yukionna', nameJa: '雪女', reading: 'ゆきおんな', nameEn: 'Yuki-onna (snow woman)', vol: '陽', page: 25, box: [135, 240, 400, 400], masks: [],
-    descEn: 'A pale woman who appears in snowstorms among bamboo, her breath freezing travellers where they stand.',
-    descJa: '吹雪の竹林に現れる白い女。その息は旅人を凍りつかせる。' },
 ];
 
 // per-item tracing overrides (tuned visually)
 const TUNE = {
-  default: { width: 1400, thr: 150, turdSize: 12, optTolerance: 0.6, blur: 0.7 },
+  default: { width: 900, bg: 40, thr: 215, turdSize: 10, optTolerance: 1.0, blur: 0.6, prec: 0 },
+  tanuki: { thr: 220, width: 950, turdSize: 6, blur: 0.5 },
+  kitsunebi: { thr: 200 },
 };
 
 const args = process.argv.slice(2);
@@ -113,7 +115,7 @@ function preprocess(it, src, t) {
   const boxes = (it.masks || []).map(([mx, my, mw, mh]) =>
     `drawbox=x=${Math.round((mx - it.box[0]) * k)}:y=${Math.round((my - it.box[1]) * k)}:w=${Math.round(mw * k)}:h=${Math.round(mh * k)}:color=white:t=fill`);
   const chain = [
-    'format=gray,split[a][b];[b]gblur=sigma=40[bg];[a][bg]blend=all_mode=divide',
+    `format=gray,split[a][b];[b]gblur=sigma=${t.bg}[bg];[a][bg]blend=all_mode=divide`,
     ...boxes,
     `scale=${t.width}:-1:flags=area`,
     `gblur=sigma=${t.blur}`,
@@ -132,9 +134,37 @@ function trace(potrace, png, t) {
       const tag = p.getPathTag('currentColor');
       const d = (tag.match(/ d="([^"]*)"/) || [])[1] || '';
       const w = p._luminanceData.width, h = p._luminanceData.height;
-      resolve({ d: d.replace(/(\d+\.\d)\d+/g, '$1').replace(/\s+/g, ' ').trim(), w, h });
+      resolve({ d: compact(d, t.prec), w, h });
     });
   });
+}
+
+// Re-encode potrace's absolute M/C/L/Z path as rounded relative commands (~2-3x smaller).
+// Absolute points are rounded first so rounding error never accumulates.
+function compact(d, prec = 0) {
+  const f = 10 ** prec;
+  const r = (v) => Math.round(v * f) / f;
+  const tok = d.match(/[MCLZ]|-?\d*\.?\d+(?:e-?\d+)?/gi);
+  const isNum = (x) => x !== undefined && !/^[MCLZ]$/i.test(x);
+  let out = '', i = 0, cx = 0, cy = 0, sx = 0, sy = 0, cmd = '';
+  while (i < tok.length) {
+    const t = tok[i++].toUpperCase();
+    if (t === 'Z') { out += 'z'; cx = sx; cy = sy; cmd = 'z'; continue; }
+    const n = t === 'C' ? 6 : 2;
+    let first = true;
+    while (isNum(tok[i])) { // potrace may repeat coordinate groups after one command letter
+      const vals = tok.slice(i, i + n).map(Number).map(r); i += n;
+      const rel = [];
+      for (let k = 0; k < n; k += 2) rel.push(r(vals[k] - cx), r(vals[k + 1] - cy));
+      const c = t === 'M' && first ? 'm' : t === 'C' ? 'c' : 'l';
+      const nums = rel.join(' ').replace(/ -/g, '-');
+      out += (c === cmd && c !== 'm' ? (rel[0] < 0 ? '' : ' ') : c) + nums;
+      cmd = c; cx = vals[n - 2]; cy = vals[n - 1];
+      if (c === 'm') { sx = cx; sy = cy; }
+      first = false;
+    }
+  }
+  return out;
 }
 
 async function main() {
@@ -160,7 +190,7 @@ async function main() {
       book: BOOK[it.vol], page: pageId(it.page), pid: PID,
       source: `https://dl.ndl.go.jp/pid/${PID}/1/${it.page}`,
       iiif: `https://dl.ndl.go.jp/api/iiif/${PID}/${pageId(it.page)}/${full(it.box).join(',')}/full/0/default.jpg`,
-      rights: RIGHTS, svg: `sekien/${it.id}.svg`, descEn: it.descEn, descJa: it.descJa,
+      rights: RIGHTS, rightsUrl: RIGHTS_URL, license: 'PDM (Public Domain Mark 1.0)', credit: CREDIT, svg: `sekien/${it.id}.svg`, descEn: it.descEn, descJa: it.descJa,
     });
   }
   fs.writeFileSync(OUT_JSON, JSON.stringify(records, null, 2) + '\n');

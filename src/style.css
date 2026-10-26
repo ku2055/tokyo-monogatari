@@ -235,3 +235,24 @@ body.night .parade-marker { box-shadow: 0 0 18px 6px rgba(210, 63, 47, 0.8); }
 .lens-print { margin: 16px 0; padding: 10px; background: var(--paper-2); border-radius: 14px; }
 .lens-print img { display: block; max-height: 360px; margin: 0 auto; border-radius: 6px; }
 .lens-print figcaption { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+/* Sekien line art (NDL public domain), coloured with CSS through an SVG mask */
+.sekien-art {
+  background: var(--ink);
+  -webkit-mask: var(--svg) center / contain no-repeat;
+  mask: var(--svg) center / contain no-repeat;
+}
+.summon-ancestor {
+  position: absolute; inset: 8% 10% 18%; background: var(--vermilion);
+  filter: drop-shadow(0 0 6px rgba(251, 246, 236, 0.9));
+  animation: brush-in 6s ease-out forwards, breathe 3s 6s ease-in-out infinite;
+}
+@keyframes brush-in {
+  from { clip-path: inset(0 100% 0 0); opacity: 0.3; }
+  to { clip-path: inset(0 0 0 0); opacity: 0.95; }
+}
+.lens-ancestor { display: flex; gap: 12px; align-items: center; margin: 16px 0; padding: 12px; border-radius: 14px; background: var(--paper-2); }
+.lens-ancestor .sekien-art { flex: 0 0 96px; height: 110px; }
+.lens-ancestor figcaption { font-size: 13px; line-height: 1.5; }
+.lens-ancestor a { color: var(--muted); font-size: 12px; }
+.lens-close { width: 40px; height: 40px; border-radius: 50%; background: var(--paper); box-shadow: var(--shadow); }
