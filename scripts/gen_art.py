@@ -73,7 +73,11 @@ def main():
             continue
         print(f"→ {legend['id']}", flush=True)
         try:
-            url = client.image(prompt_for(legend, args.kind), model="gpt-image-2.5-flare", size=kind["size"])[0]
+            tid = client.image_create(prompt_for(legend, args.kind), model="gpt-image-2.5-flare", size=kind["size"])
+            print(f"  task {tid}", flush=True)  # logged so a timed-out task can still be collected later
+            # Duomi's queue can take well over 10 minutes when busy
+            task = client.wait(tid, client.image_task, poll=8, timeout=1800)
+            url = task["data"]["images"][0]["url"]
         except Exception as e:  # report and move on; never retry blindly (costs money)
             print(f"  failed: {e}", flush=True)
             continue
