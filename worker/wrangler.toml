@@ -1,0 +1,14 @@
+name = "tokyo-monogatari-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://ku2055.github.io"
+DAILY_CAP = "150"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "tokyo-monogatari"
+
+# Secrets (set with `wrangler secret put`, never committed):
+#   OPENROUTER_KEY, DUOMI_KEY, ELEVENLABS_KEY, ACCESS_CODE

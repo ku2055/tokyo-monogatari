@@ -2,7 +2,19 @@
 
 **Walk the legends of Tokyo.** A bilingual (English / 日本語) 3D map of Tokyo's temples, shrines and folk-tale sites. Travellers open a legend, read the story where it happened, and collect a 御朱印 (goshuin) style stamp when they're actually there.
 
-Built for a Tokyo hackathon. **No API keys needed:** it runs entirely on open data.
+Built for a Tokyo hackathon. The map and stamp rally run on open data with **no API keys in the client**. The live AI lenses run on a Cloudflare Worker that holds the keys.
+
+## ✨ Live AI lenses
+
+| | 👹 **Yokai Lens** (百鬼夜行) | ⏳ **Edo Window** (時の窓) |
+|---|---|---|
+| You do | Photograph any spot in Tokyo | Photograph any view |
+| The AI does | Reads the scene, your GPS, and the nearest real legends and shrines, then **invents a new yokai that haunts exactly that spot**. It paints the yokai into your photo and tells its kaidan like a rakugo storyteller (EN/JA) | Maps each modern thing it sees to its Edo counterpart (expressway → moat, asphalt → dirt slope) and **repaints your photo as the same viewpoint around 1850** in Hiroshige's woodblock style, with a narrated walk back in time |
+| Then | Drag the before/after slider. Every spirit joins the shared **Night Parade** map | The same, with the "then and now" mappings listed |
+
+Example from Kii-no-kuni-zaka, where Hearn's faceless Nopperabo appears: the AI spotted the wooden slope marker and conjured **削り顔狸, the "Face-Planing Tanuki"**, which planes travellers' faces smooth. Its Edo Window rebuilt the Kishū Tokugawa estate wall and the Benkei moat, matching Hiroshige's real 1857 print of the slope, which it was never shown.
+
+Pipeline (`worker/src/index.js`): photo → R2 → **Gemini 3.8 Flash** (vision + lore → JSON story and edit instruction) → **Nano Banana 2.1** image edit (Duomi) → R2 → narration (**ElevenLabs** EN / **Gemini TTS** JA). About 0.08 CNY + $0.02 per spirit, roughly 60 seconds.
 
 ## Features
 
@@ -19,6 +31,9 @@ Built for a Tokyo hackathon. **No API keys needed:** it runs entirely on open da
 
 ## Run it
 
+The lenses need the hackathon access code (ask the team), which the Worker checks. A daily cap limits spend.
+
+
 ```bash
 npm install
 npm run dev      # http://localhost:5173 (also exposed on your LAN for phone testing)
@@ -26,6 +41,17 @@ npm run build    # static site in dist/
 ```
 
 Pushes to `main` deploy to GitHub Pages automatically (`.github/workflows/deploy.yml`).
+
+### Worker (Cloudflare)
+
+```bash
+cd worker
+wrangler r2 bucket create tokyo-monogatari
+wrangler secret put OPENROUTER_KEY   # also DUOMI_KEY, ELEVENLABS_KEY, ACCESS_CODE: paste when prompted, never commit
+wrangler deploy
+```
+
+Set `VITE_API` at build time to point the app at a different Worker.
 
 ## iPhone app (later, on a Mac)
 

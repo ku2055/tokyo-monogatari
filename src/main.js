@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
 import legends from '../data/legends.json';
 import placesUrl from '../data/places.geojson?url';
+import { initLens } from './lens.js';
 
 // OpenFreeMap: free OSM vector tiles, no API key required
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
@@ -95,6 +96,8 @@ function saveStamps() {
 }
 
 const stamps = loadStamps();
+// Loaded once and shared by the map layer and the AI lens (nearest shrines ground the story)
+const placesPromise = fetch(placesUrl).then((r) => r.json());
 
 function loadPhotos() {
   try {
@@ -197,9 +200,10 @@ map.on('load', () => {
 function addPlacesLayer() {
   map.addSource('places', {
     type: 'geojson',
-    data: placesUrl,
+    data: { type: 'FeatureCollection', features: [] },
     attribution: '© OpenStreetMap contributors',
   });
+  placesPromise.then((data) => map.getSource('places').setData(data));
   map.addLayer({
     id: 'places',
     type: 'circle',
@@ -462,6 +466,9 @@ function toast(msg) {
 }
 
 // ---------- wiring ----------
+const lens = initLens({ map, legends, placesPromise, getLang: () => lang, getUserPos: () => userPos, toast });
+$('#btn-yokai').addEventListener('click', () => lens.open('yokai'));
+$('#btn-edo').addEventListener('click', () => lens.open('edo'));
 $('#btn-lang').addEventListener('click', toggleLang);
 $('#btn-locate').addEventListener('click', locate);
 $('#btn-tour').addEventListener('click', tour);
